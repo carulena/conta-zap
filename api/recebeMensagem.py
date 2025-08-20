@@ -1,3 +1,4 @@
+import asyncio
 import os
 from http.server import BaseHTTPRequestHandler
  
@@ -16,55 +17,66 @@ bot = Bot(token=TOKEN)
 
 app = Flask(__name__)
 
+async def download_file(file_id):
+    f = await bot.get_file(file_id)
+    return await f.download_as_bytearray()
+
+async def send_message(chat_id, text):
+    await bot.send_message(chat_id=chat_id, text=text)
+
+async def send_photo(chat_id, photo_bytes):
+    await bot.send_photo(chat_id=chat_id, photo=photo_bytes)
+
 # ====================
 # FUNÇÃO QUE PROCESSA O ZIP
 # ====================
+def handle_zip(file_bytes, chat_id):
+    # Salva temporariamente em /tmp
+    file_path = "/tmp/recebido.zip"
+    with open(file_path, "wb") as f:
+        f.write(file_bytes)
 
-# Função assíncrona não necessária, podemos usar função normal
-def handle_zip(update_json):
-    update = Update.de_json(update_json, bot)
-    print("Update recebido:", update)
-    print("Chat ID:", update.message.chat.id if update.message else "Sem mensagem")
-    print("Document MIME type:", update.message.document.mime_type if update.message and update.message.document else "Nenhum documento")
+    # abrir zip e ler txt
+    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
+        with zip_ref.open(txt_name) as f:
+            linhas = f.read().decode("utf-8").splitlines()
+    os.remove(file_path)
 
-    if update.message and update.message.document:
-        bot.send_message(chat_id=update.message.chat.id, text="Recebi o ZIP!")
-        file = bot.get_file(update.message.document.file_id)
-        file_path = "/tmp/recebido.zip"
-        file.download(file_path)
-        
-        # abrir zip e ler txt
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
-            with zip_ref.open(txt_name) as f:
-                linhas = f.read().decode("utf-8").splitlines()
-        os.remove(file_path)
-
-        cocos = d.criaDataframe(linhas)
-        autores = d.agrupaPorAutor(cocos)
-        tabela = d.criaTabela(autores)
-        bot.send_message(chat_id=update.message.chat.id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
-        
-        porDia = d.graficoPorDia(cocos)
-        with open(porDia, "rb") as photo:
-            bot.send_photo(chat_id=update.message.chat.id, photo=photo)
+    cocos = d.criaDataframe(linhas)
+    autores = d.agrupaPorAutor(cocos)
+    tabela = d.criaTabela(autores)
+    
+    # Envia mensagens assíncronas
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(send_message(chat_id, f"<pre>{tabela}</pre>"))
+    
+    porDia = d.graficoPorDia(cocos)
+    with open(porDia, "rb") as photo:
+        loop.run_until_complete(send_photo(chat_id, photo.read()))
 
 # ====================
 # ROTA PARA RECEBER MENSAGENS DO TELEGRAM
 # ====================
-@app.route(f"/webhook", methods=["POST"])
+@app.route("/webhook", methods=["POST", "GET"])
 def webhook():
-    print("webhook")
-    update = telegram.Update.de_json(request.get_json(force=True), bot)
-    
+    if request.method == "GET":
+        return "Webhook ativo!"
+
+    update = Update.de_json(request.get_json(force=True), bot)
+
     if update.message and update.message.document:
         file_id = update.message.document.file_id
-        file = bot.get_file(file_id)
-        file_bytes = file.download_as_bytearray()
         
-        resultado = handle_zip(file_bytes)
-        bot.send_message(chat_id=update.message.chat.id, text=resultado)
-    
+        # roda async para baixar arquivo
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        file_bytes = loop.run_until_complete(download_file(file_id))
+
+        loop.run_until_complete(send_message(update.message.chat.id, "Recebi o ZIP!"))
+        handle_zip(file_bytes, update.message.chat.id)
+
     return "ok"
 
 # ====================
