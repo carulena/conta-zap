@@ -50,11 +50,11 @@ def handle_zip(file_bytes, chat_id):
     # Envia mensagens assíncronas
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(send_message(chat_id, f"<pre>{tabela}</pre>"))
+    loop.run_until_complete(send_message(chat_id, f"{tabela}"))
     
-    porDia = d.graficoPorDia(cocos)
-    with open(porDia, "rb") as photo:
-        loop.run_until_complete(send_photo(chat_id, photo.read()))
+    # porDia = d.graficoPorDia(cocos)
+    # with open(porDia, "rb") as photo:
+    #     loop.run_until_complete(send_photo(chat_id, photo.read()))
 
 # ====================
 # ROTA PARA RECEBER MENSAGENS DO TELEGRAM
