@@ -1,11 +1,11 @@
 import zipfile
 import pandas as pd
 import os
+os.environ['MPLCONFIGDIR'] = '/tmp'
 from telegram import Update, Bot
 import api.analisaDados as d
 from flask import Request, jsonify
 
-os.environ['MPLCONFIGDIR'] = '/tmp'
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
 
