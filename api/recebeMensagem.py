@@ -6,7 +6,7 @@ os.environ['MPLCONFIGDIR'] = '/tmp'
 import zipfile
 from io import BytesIO
 from telegram import Update, Bot
-import analisaDados as d
+import api.analisaDados as d
 import pandas as pd
 
 
