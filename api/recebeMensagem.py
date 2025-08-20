@@ -1,4 +1,3 @@
-import asyncio
 import os
 from http.server import BaseHTTPRequestHandler
  
@@ -57,8 +56,8 @@ def webhook():
 
     if update.message and update.message.document:
         file_id = update.message.document.file_id
-        file = asyncio.run(bot.get_file(file_id))                # coroutine
-        file_bytes = asyncio.run(file.download_as_bytearray())   # coroutine
+        file = bot.get_file(file_id)
+        file_bytes = file.download_as_bytearray()
         handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
