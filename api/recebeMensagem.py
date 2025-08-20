@@ -12,11 +12,12 @@ bot = Bot(token=TOKEN)
 Bot(token=TOKEN)
 
 def handler(request):
-    if request.method != "POST":
-        return Response(content="Método não permitido", status_code=405)
+    # Vercel envia o método em minúsculas
+    if request.method.lower() != "post":
+        return {"error": "Método não permitido"}, 405
 
     try:
-        update_json = request.json()
+        update_json = request.get_json()  # já é dict
         update = Update.de_json(update_json, bot)
 
         if update.message and update.message.document:
@@ -42,7 +43,7 @@ def handler(request):
             with open(porDia, "rb") as photo:
                 bot.send_photo(chat_id=update.message.chat.id, photo=photo)
 
-        return Response(content='{"ok": true}', media_type="application/json")
+        return {"ok": True}
 
     except Exception as e:
-        return Response(content=f'{{"error": "{str(e)}"}}', media_type="application/json", status_code=500)
+        return {"error": str(e)}, 500
