@@ -16,12 +16,9 @@ bot = Bot(token=TOKEN)
 
 class handler(BaseHTTPRequestHandler):
     
-    def do_POST(request):
-        """
-        Função handler compatível com Vercel Serverless.
-        Recebe requests POST do Telegram webhook.
-        """
-        if request.method.lower() != "post":
+    def do_POST(self):
+        print("hey, I'm inside your function")
+        if self.request.method.lower() != "post":
             return {"error": "Método não permitido"}, 405
 
         try:
