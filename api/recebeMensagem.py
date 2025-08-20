@@ -17,7 +17,7 @@ bot = Bot(token=TOKEN)
 class handler(BaseHTTPRequestHandler):
     
     def do_POST(self):
-        print(self)
+        print(self.request)
         update_json = self.request.get_json()
         update = Update.de_json(update_json, bot)
         chat_id = update.message.chat.id
