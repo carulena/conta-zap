@@ -1,19 +1,14 @@
 import zipfile
 import pandas as pd
 import os
-os.environ['MPLCONFIGDIR'] = '/tmp'
 from telegram import Update, Bot
-from telegram.ext import ContextTypes
 import api.analisaDados as d
-from flask import Flask, request, jsonify
+from flask import Request, jsonify
 
-# Inicializa Flask
-app = Flask(__name__)
-# Lê token do ambiente (melhor do que token.txt)
+os.environ['MPLCONFIGDIR'] = '/tmp'
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
 
-# Função assíncrona não necessária, podemos usar função normal
 def handle_zip(update_json):
     update = Update.de_json(update_json, bot)
     print("Update recebido:", update)
@@ -26,7 +21,6 @@ def handle_zip(update_json):
         file_path = "/tmp/recebido.zip"
         file.download(file_path)
         
-        # abrir zip e ler txt
         with zipfile.ZipFile(file_path, 'r') as zip_ref:
             txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
             with zip_ref.open(txt_name) as f:
@@ -42,10 +36,10 @@ def handle_zip(update_json):
         with open(porDia, "rb") as photo:
             bot.send_photo(chat_id=update.message.chat.id, photo=photo)
 
-# Rota webhook
-@app.route("/api/webhook", methods=["POST"])
-def webhook():
-    print("webhook")
+def handler(request: Request):
+    if request.method != "POST":
+        return jsonify({"error": "Método não permitido"}), 405
+
     update_json = request.get_json(force=True)
     handle_zip(update_json)
     return jsonify({"ok": True})
