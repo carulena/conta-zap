@@ -1,3 +1,4 @@
+import asyncio
 import os
 from http.server import BaseHTTPRequestHandler
  
@@ -58,11 +59,9 @@ def webhook():
         file_id = update.message.document.file_id
         file = bot.get_file(file_id)
 
-        # Salva o arquivo temporariamente
-        file_path = f"/tmp/{update.message.document.file_name}"
-        file.download(file_path) 
-        with open(file_path, "rb") as f:
-            file_bytes = f.read()
+        # roda a coroutine para baixar o arquivo
+        file_bytes = asyncio.run(file.download_as_bytearray())
+
         handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
