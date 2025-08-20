@@ -57,11 +57,8 @@ def webhook():
 
     if update.message and update.message.document:
         file_id = update.message.document.file_id
-        file = bot.get_file(file_id)
-
-        # roda a coroutine para baixar o arquivo
-        file_bytes = asyncio.run(file.download_as_bytearray())
-
+        file = asyncio.run(bot.get_file(file_id))                # coroutine
+        file_bytes = asyncio.run(file.download_as_bytearray())   # coroutine
         handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
