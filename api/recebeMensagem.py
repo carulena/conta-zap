@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from telegram import Update, Bot
 from telegram.ext import ContextTypes
-import analisaDados as d
+import api.analisaDados as d
 from flask import Flask, request, jsonify
 
 # Inicializa Flask
