@@ -58,7 +58,7 @@ async def webhook():
         file_id = update.message.document.file_id
         file = await bot.get_file(file_id)
         file_bytes = await file.download_as_bytearray()
-        handle_zip(file_bytes, update.message.chat.id)
+        await handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
 
