@@ -52,7 +52,7 @@ def handle_zip(update_json):
 # ====================
 # ROTA PARA RECEBER MENSAGENS DO TELEGRAM
 # ====================
-@app.route(f"/webhook/", methods=["POST"])
+@app.route(f"/webhook", methods=["POST"])
 def webhook():
     print("webhook")
     update = telegram.Update.de_json(request.get_json(force=True), bot)
