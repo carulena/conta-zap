@@ -18,6 +18,7 @@ bot = Bot(token=TOKEN)
 class handler(BaseHTTPRequestHandler):
     
    def do_POST(self):
+    try:
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length)  # bytesupdate_json = json.loads(body)         # agora é dict
         update_json = json.loads(body)         # agora é dict
@@ -29,3 +30,8 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"ok")
+    except Exception as e:
+        print("ERRO NO HANDLER:", e)   # loga no Vercel
+        self.send_response(500)
+        self.end_headers()
+        self.wfile.write(b"erro")
