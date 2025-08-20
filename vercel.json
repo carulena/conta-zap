@@ -1,13 +1,12 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/recebeMensagem.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/recebeMensagem.py": {
+      "runtime": "python3.11",
+      "handler": "app",
+      "launcherType": "ASGI"
     }
-  ],
+  },
   "routes": [
-    { "src": "/webhook", "dest": "api/recebeMensagem.py" },
-    { "src": "/", "dest": "api/recebeMensagem.py" }
+    { "src": "/(.*)", "dest": "api/recebeMensagem.py" }
   ]
 }

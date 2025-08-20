@@ -1,34 +1,27 @@
 import os
-from http.server import BaseHTTPRequestHandler
- 
-# Configura o matplotlib para rodar em /tmp (Vercel serverless)
 os.environ['MPLCONFIGDIR'] = '/tmp'
-from io import BytesIO
-from telegram import Update, Bot
-import api.analisaDados as d
-import telegram
-import pandas as pd
-from flask import Flask, request
 import zipfile
+from fastapi import FastAPI, Request
+import asyncio
+from telegram import Bot, Update
+import api.analisaDados as d
 
-# Inicializa bot
-TOKEN = os.environ.get("TELEGRAM_TOKEN")
+# Config matplotlib para Vercel
+
+# Bot
+TOKEN = os.environ["TELEGRAM_TOKEN"]
 bot = Bot(token=TOKEN)
 
-app = Flask(__name__)
+# FastAPI app
+app = FastAPI()
 
-# ====================
-# FUNÇÃO QUE PROCESSA O ZIP
-# ====================
 async def handle_zip(file_bytes, chat_id):
-    # Salva ZIP em /tmp
     file_path = "/tmp/recebido.zip"
     with open(file_path, "wb") as f:
         f.write(file_bytes)
 
-    # Extrai TXT
     with zipfile.ZipFile(file_path, 'r') as zip_ref:
-        txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
+        txt_name = [f for f in zip_ref.namelist() if f.endswith(".txt")][0]
         with zip_ref.open(txt_name) as f:
             linhas = f.read().decode("utf-8").splitlines()
     os.remove(file_path)
@@ -38,33 +31,28 @@ async def handle_zip(file_bytes, chat_id):
     autores = d.agrupaPorAutor(cocos)
     tabela = d.criaTabela(autores)
 
-    # Envia resultados
-    await bot.send_message(chat_id=chat_id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
+    await bot.send_message(chat_id, f"<pre>{tabela}</pre>", parse_mode="HTML")
 
-    # Gera gráfico (opcional)
     porDia = d.graficoPorDia(cocos)
     with open(porDia, "rb") as photo:
-        await bot.send_photo(chat_id=chat_id, photo=photo)
+        await bot.send_photo(chat_id, photo=photo)
 
-# ====================
-# ROTA PARA RECEBER WEBHOOK DO TELEGRAM
-# ====================
-@app.route("/webhook", methods=["POST"])
-async def webhook():
-    update_json = request.get_json(force=True)
+@app.post("/webhook")
+async def webhook(request: Request):
+    update_json = await request.json()
     update = Update.de_json(update_json, bot)
 
     if update.message and update.message.document:
         file_id = update.message.document.file_id
         file = await bot.get_file(file_id)
         file_bytes = await file.download_as_bytearray()
-        await handle_zip(file_bytes, update.message.chat.id)
 
-    return "ok"
+        # não bloqueia resposta → processa em background
+        asyncio.create_task(handle_zip(file_bytes, update.message.chat.id))
 
-# ====================
-# ROTA PÚBLICA (opcional) para teste
-# ====================
-@app.route("/")
-def index():
-    return "Bot rodando!"
+    # resposta imediata para o Telegram não reenviar várias vezes
+    return {"ok": True}
+
+@app.get("/")
+async def index():
+    return {"status": "Bot rodando!"}
