@@ -19,8 +19,7 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         request = self.request
         print("hey, I'm inside your function")
-        bot.send_message(chat_id=chat_id, text=self.request.method)
-        if request.method.lower() != "post":
+        if self.request.method.lower() != "post":
             return {"error": "Método não permitido"}, 405
 
         try:
