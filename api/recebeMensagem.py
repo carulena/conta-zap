@@ -1,5 +1,6 @@
 import os
-
+from http.server import BaseHTTPRequestHandler
+ 
 # Configura o matplotlib para rodar em /tmp (Vercel serverless)
 os.environ['MPLCONFIGDIR'] = '/tmp'
 import zipfile
@@ -12,48 +13,51 @@ import pandas as pd
 # Inicializa o bot globalmente (sem criar servidor local)
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
-def handler(request):
-    """
-    Função handler compatível com Vercel Serverless.
-    Recebe requests POST do Telegram webhook.
-    """
-    if request.method.lower() != "post":
-        return {"error": "Método não permitido"}, 405
 
-    try:
-        # Pega o JSON enviado pelo Telegram
-        update_json = request.get_json()
-        update = Update.de_json(update_json, bot)
+class handler(BaseHTTPRequestHandler):
+    
+    def do_POST(request):
+        """
+        Função handler compatível com Vercel Serverless.
+        Recebe requests POST do Telegram webhook.
+        """
+        if request.method.lower() != "post":
+            return {"error": "Método não permitido"}, 405
 
-        if update.message and update.message.document:
-            chat_id = update.message.chat.id
-            bot.send_message(chat_id=chat_id, text="Recebi o ZIP!")
+        try:
+            # Pega o JSON enviado pelo Telegram
+            update_json = request.get_json()
+            update = Update.de_json(update_json, bot)
 
-            # Baixa o arquivo ZIP
-            file = bot.get_file(update.message.document.file_id)
-            zip_bytes = BytesIO()
-            file.download(out=zip_bytes)
-            zip_bytes.seek(0)
+            if update.message and update.message.document:
+                chat_id = update.message.chat.id
+                bot.send_message(chat_id=chat_id, text="Recebi o ZIP!")
 
-            # Lê o arquivo TXT dentro do ZIP
-            with zipfile.ZipFile(zip_bytes, 'r') as zip_ref:
-                txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
-                with zip_ref.open(txt_name) as f:
-                    linhas = f.read().decode("utf-8").splitlines()
+                # Baixa o arquivo ZIP
+                file = bot.get_file(update.message.document.file_id)
+                zip_bytes = BytesIO()
+                file.download(out=zip_bytes)
+                zip_bytes.seek(0)
 
-            # Processa os dados com suas funções
-            cocos = d.criaDataframe(linhas)
-            autores = d.agrupaPorAutor(cocos)
-            tabela = d.criaTabela(autores)
+                # Lê o arquivo TXT dentro do ZIP
+                with zipfile.ZipFile(zip_bytes, 'r') as zip_ref:
+                    txt_name = [f for f in zip_ref.namelist() if f.endswith('.txt')][0]
+                    with zip_ref.open(txt_name) as f:
+                        linhas = f.read().decode("utf-8").splitlines()
 
-            bot.send_message(chat_id=chat_id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
+                # Processa os dados com suas funções
+                cocos = d.criaDataframe(linhas)
+                autores = d.agrupaPorAutor(cocos)
+                tabela = d.criaTabela(autores)
 
-            # Gera o gráfico e envia
-            porDia = d.graficoPorDia(cocos)
-            with open(porDia, "rb") as photo:
-                bot.send_photo(chat_id=chat_id, photo=photo)
+                bot.send_message(chat_id=chat_id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
 
-        return {"ok": True}
+                # Gera o gráfico e envia
+                porDia = d.graficoPorDia(cocos)
+                with open(porDia, "rb") as photo:
+                    bot.send_photo(chat_id=chat_id, photo=photo)
 
-    except Exception as e:
-        return {"error": str(e)}, 500
+            return {"ok": True}
+
+        except Exception as e:
+            return {"error": str(e)}, 500
