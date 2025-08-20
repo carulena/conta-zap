@@ -47,7 +47,7 @@ def criaTabela(resumo):
     tabela = "Autor       | Total cocos\n"
     tabela += "-------------------------\n"
     for _, row in resumo.iterrows():
-        tabela += f"{row['autor']:<10} | {row['cocos']}\n"
+        tabela += f"{row['autor']:<20} | {row['cocos']}\n"
         
     return tabela
 
