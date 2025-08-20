@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify
 
 # Inicializa Flask
 app = Flask(__name__)
-
+os.environ['MPLCONFIGDIR'] = '/tmp'
 # Lê token do ambiente (melhor do que token.txt)
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 bot = Bot(token=TOKEN)
