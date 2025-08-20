@@ -57,7 +57,7 @@ def webhook():
     if update.message and update.message.document:
         file_id = update.message.document.file_id
         file = bot.get_file(file_id)
-        file_bytes = file.download_as_bytearray()
+        file_bytes = file.download_as_bytearray().result()
         handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
