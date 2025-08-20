@@ -57,15 +57,19 @@ async def handle_zip(file_bytes, chat_id):
 # ROTA PARA RECEBER MENSAGENS DO TELEGRAM
 # ====================
 @app.route("/webhook", methods=["POST", "GET"])
-async def webhook(): 
+async def webhook():
     if request.method == "GET":
         return "Webhook ativo!"
 
     update_json = request.get_json(force=True)
     update = Update.de_json(update_json, bot)
-    await handle_zip(update_json, update.message.chat.id)
-    return "ok"
 
+    if update.message and update.message.document:
+        file_id = update.message.document.file_id
+        file_bytes = await download_file(file_id)  # 🔹 baixar bytes do ZIP
+        await handle_zip(file_bytes, update.message.chat.id)
+
+    return "ok"
 # ====================
 # ROTA PÚBLICA (opcional) para teste
 # ====================
