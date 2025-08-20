@@ -1,12 +1,9 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "api/recebeMensagem.py",
-      "use": "@vercel/python"
-    }
+    { "src": "api/recebeMensagem.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "api/recebeMensagem.py" }
+    { "src": "/webhook", "dest": "api/recebeMensagem.py" }
   ]
 }
