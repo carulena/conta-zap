@@ -13,8 +13,7 @@ import zipfile
 
 # Inicializa bot
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
-bot = Bot(token=TOKEN, base_url=None, session=None)
-
+bot = Bot(token=TOKEN)
 
 app = Flask(__name__)
 
@@ -57,8 +56,8 @@ def webhook():
 
     if update.message and update.message.document:
         file_id = update.message.document.file_id
-        file = bot.get_file(file_id)       # retorna File direto
-        file_bytes = file.download_as_bytearray()  
+        file = bot.get_file(file_id)
+        file_bytes = file.download_as_bytearray()
         handle_zip(file_bytes, update.message.chat.id)
 
     return "ok"
