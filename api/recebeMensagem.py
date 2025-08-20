@@ -20,7 +20,7 @@ app = Flask(__name__)
 # ====================
 # FUNÇÃO QUE PROCESSA O ZIP
 # ====================
-def handle_zip(file_bytes, chat_id):
+async def handle_zip(file_bytes, chat_id):
     # Salva ZIP em /tmp
     file_path = "/tmp/recebido.zip"
     with open(file_path, "wb") as f:
@@ -39,12 +39,12 @@ def handle_zip(file_bytes, chat_id):
     tabela = d.criaTabela(autores)
 
     # Envia resultados
-    bot.send_message(chat_id=chat_id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
+    await bot.send_message(chat_id=chat_id, text=f"<pre>{tabela}</pre>", parse_mode="HTML")
 
     # Gera gráfico (opcional)
     porDia = d.graficoPorDia(cocos)
     with open(porDia, "rb") as photo:
-        bot.send_photo(chat_id=chat_id, photo=photo)
+        await bot.send_photo(chat_id=chat_id, photo=photo)
 
 # ====================
 # ROTA PARA RECEBER WEBHOOK DO TELEGRAM
