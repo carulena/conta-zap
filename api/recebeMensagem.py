@@ -24,9 +24,10 @@ class handler(BaseHTTPRequestHandler):
         update_json = json.loads(body)         # agora é dict
         update = Update.de_json(update_json, bot)
         chat_id = update.message.chat.id
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         loop.run_until_complete(bot.send_message(chat_id=chat_id, text="Recebi o ZIP!"))
-        
+        loop.close()
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"ok")
