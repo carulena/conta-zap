@@ -62,7 +62,8 @@ async def webhook():
         return "Webhook ativo!"
 
     update_json = request.get_json(force=True)
-    await handle_zip(update_json)
+    update = Update.de_json(update_json, bot)
+    await handle_zip(update_json, update.message.chat.id)
     return "ok"
 
 # ====================
