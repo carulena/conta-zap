@@ -17,10 +17,11 @@ bot = Bot(token=TOKEN)
 
 class handler(BaseHTTPRequestHandler):
     
-    def do_POST(self):
+   async def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length)  # bytesupdate_json = json.loads(body)         # agora é dict
         update_json = json.loads(body)         # agora é dict
         update = Update.de_json(update_json, bot)
         chat_id = update.message.chat.id
-        bot.send_message(chat_id=chat_id, text="Recebi o ZIP!")
+        await bot.send_message(chat_id=chat_id, text="Recebi o ZIP!")
+        return {"status": 200, "body": "ok"}
