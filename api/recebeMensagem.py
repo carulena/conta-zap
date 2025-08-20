@@ -1,4 +1,3 @@
-import asyncio
 import os
 from http.server import BaseHTTPRequestHandler
  
@@ -30,7 +29,7 @@ async def send_photo(chat_id, photo_bytes):
 # ====================
 # FUNÇÃO QUE PROCESSA O ZIP
 # ====================
-def handle_zip(file_bytes, chat_id):
+async def handle_zip(file_bytes, chat_id):
     # Salva temporariamente em /tmp
     file_path = "/tmp/recebido.zip"
     with open(file_path, "wb") as f:
@@ -48,9 +47,7 @@ def handle_zip(file_bytes, chat_id):
     tabela = d.criaTabela(autores)
     
     # Envia mensagens assíncronas
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(send_message(chat_id, f"{tabela}"))
+    await send_message(chat_id, f"{tabela}")
     
     # porDia = d.graficoPorDia(cocos)
     # with open(porDia, "rb") as photo:
@@ -60,23 +57,12 @@ def handle_zip(file_bytes, chat_id):
 # ROTA PARA RECEBER MENSAGENS DO TELEGRAM
 # ====================
 @app.route("/webhook", methods=["POST", "GET"])
-def webhook():
+async def webhook(): 
     if request.method == "GET":
         return "Webhook ativo!"
 
-    update = Update.de_json(request.get_json(force=True), bot)
-
-    if update.message and update.message.document:
-        file_id = update.message.document.file_id
-        
-        # roda async para baixar arquivo
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        file_bytes = loop.run_until_complete(download_file(file_id))
-
-        loop.run_until_complete(send_message(update.message.chat.id, "Recebi o ZIP!"))
-        handle_zip(file_bytes, update.message.chat.id)
-
+    update_json = request.get_json(force=True)
+    await handle_zip(update_json)
     return "ok"
 
 # ====================
