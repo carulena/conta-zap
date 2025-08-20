@@ -16,8 +16,12 @@ bot = Bot(token=TOKEN)
 # Função assíncrona não necessária, podemos usar função normal
 def handle_zip(update_json):
     update = Update.de_json(update_json, bot)
-    
+    print("Update recebido:", update)
+    print("Chat ID:", update.message.chat.id if update.message else "Sem mensagem")
+    print("Document MIME type:", update.message.document.mime_type if update.message and update.message.document else "Nenhum documento")
+
     if update.message and update.message.document:
+        bot.send_message(chat_id=update.message.chat.id, text="Recebi o ZIP!")
         file = bot.get_file(update.message.document.file_id)
         file_path = "/tmp/recebido.zip"
         file.download(file_path)
@@ -41,6 +45,7 @@ def handle_zip(update_json):
 # Rota webhook
 @app.route("/api/webhook", methods=["POST"])
 def webhook():
+    print("webhook")
     update_json = request.get_json(force=True)
     handle_zip(update_json)
     return jsonify({"ok": True})
